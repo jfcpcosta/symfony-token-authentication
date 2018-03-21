@@ -1,0 +1,41 @@
+security:
+    encoders:
+        App\Entity\User:
+            algorithm: bcrypt
+            iterations: 13
+
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_USER]
+
+    # https://symfony.com/doc/current/security.html#b-configuring-how-users-are-loaded
+    providers:
+        user_db:
+            entity: { class: App\Entity\User, property: email }
+        api_key_user_provider:
+            id: auth.security.user_provider
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        login:
+            pattern: ^/api/auth/login
+            provider: user_db
+            stateless: true
+            anonymous: true
+            form_login:
+                check_path: /api/auth/login
+                success_handler: auth.security.authentication_handler
+                failure_handler: auth.security.authentication_handler
+                require_previous_session: false
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: api_key_user_provider
+            simple_preauth:
+                authenticator: auth.security.token_authenticator
+
+    access_control:
+        - { path: /api/auth/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: /auth/me, roles: IS_FULLY_AUTHENTICATED }
